@@ -12,30 +12,21 @@ contract Domains {
 
     mapping(string => Domain) domains;
 
-    function onlyDomainOwner(string calldata domainName) private view {
-        require(
-            msg.sender == domains[domainName].owner,
-            "Sender is not domain owner"
-        );
-    }
-
-    function onlyUnregistered(string calldata domainName) private view {
-        require(
-            address(0) == domains[domainName].owner,
-            "Domain is already registered"
-        );
-    }
-
     function register(string calldata domainName, string calldata data)
         external
     {
+        require(
+            !isRegistered(domainName),
+            "Domain has already been registered"
+        );
         domains[domainName] = Domain(msg.sender, data);
     }
 
     function modifyData(string calldata domainName, string calldata data)
         external
     {
-        onlyDomainOwner(domainName);
+        require(isRegistered(domainName), "Domain has not been registered");
+        require(isDomainOwner(domainName), "Sender does not own this domain");
         domains[domainName].data = data;
     }
 
@@ -47,7 +38,19 @@ contract Domains {
         return domains[domainName];
     }
 
-    constructor() {
-        console.log("Domains.sol test");
+    function isRegistered(string calldata domainName)
+        private
+        view
+        returns (bool)
+    {
+        return address(0) != domains[domainName].owner;
+    }
+
+    function isDomainOwner(string calldata domainName)
+        private
+        view
+        returns (bool)
+    {
+        return msg.sender == domains[domainName].owner;
     }
 }
