@@ -10,7 +10,8 @@ async function main() {
     console.log("Contract deployed to: ", contract.address);
     console.log("Contract deployed by: ", ownerAddress)
 
-    let txn = await contract.register('definitelynotnevergonnagiveyouup', ownerAddress);
+    const domain = "ttttt"
+    let txn = await contract.register(domain, ownerAddress, { value: hre.ethers.utils.parseEther("0.6") });
     await txn.wait();
 
     async function printDomainInfo(domain: string) {
@@ -18,12 +19,17 @@ async function main() {
         console.log(domainInfo)
     }
 
-    await printDomainInfo('definitelynotnevergonnagiveyouup')
+    await printDomainInfo(domain)
 
-    txn = await contract.modifyData('definitelynotnevergonnagiveyouup', `https://www.youtube.com/watch?v=dQw4w9WgXcQ`)
+    txn = await contract.modifyData(domain, `https://www.youtube.com/watch?v=dQw4w9WgXcQ`)
     await txn.wait();
-    await printDomainInfo('definitelynotnevergonnagiveyouup')
+    await printDomainInfo(domain)
 
+    const balance = await hre.ethers.provider.getBalance(contract.address)
+    console.log(hre.ethers.utils.formatEther(balance))
+
+    const tokenUri = await contract.tokenURI(0)
+    console.log(tokenUri)
     // await contract.connect(address2).modifyData('test', 'test')
 }
 
