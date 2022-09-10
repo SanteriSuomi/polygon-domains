@@ -1,7 +1,7 @@
 import hre from "hardhat"
 
 async function main() {
-    const [deployer, address2] = await hre.ethers.getSigners();
+    const [deployer, signer2] = await hre.ethers.getSigners();
     const ownerAddress = await deployer.getAddress();
 
     const factory = await hre.ethers.getContractFactory('Domains');
@@ -11,11 +11,11 @@ async function main() {
     console.log("Contract deployed by: ", ownerAddress)
 
     const domain = "ttttt"
-    let txn = await contract.register(domain, ownerAddress, { value: hre.ethers.utils.parseEther("0.6") });
+    let txn = await contract.register(domain, ownerAddress, { value: hre.ethers.utils.parseEther("0.006") });
     await txn.wait();
 
     async function printDomainInfo(domain: string) {
-        const domainInfo = await contract.getDomainInfo(domain);
+        const domainInfo = await contract.getDomainData(domain);
         console.log(domainInfo)
     }
 
@@ -31,6 +31,11 @@ async function main() {
     const tokenUri = await contract.tokenURI(0)
     console.log(tokenUri)
     // await contract.connect(address2).modifyData('test', 'test')
+
+    console.log("\n" + await contract.ownerOf(0))
+    await contract.transferFrom(deployer.getAddress(), signer2.getAddress(), 0);
+    console.log(await contract.ownerOf(0))
+    await printDomainInfo(domain)
 }
 
 async function run() {
