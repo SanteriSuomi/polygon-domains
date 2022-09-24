@@ -1,22 +1,34 @@
 // SPDX-License-Identifier: UNLICENSED
 
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.16;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 import {StringUtils} from "./libraries/StringUtils.sol";
 
 import "hardhat/console.sol";
 
-contract Domains is ERC721URIStorage {
+contract Domains is ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
+
+    event Registered(address registrant, string indexed domain);
+
+    error AlreadyRegistered();
+    error NotRegistered();
+    error NotValidName();
+    error NotEnoughEtherPaid();
+    error NotOwner();
+    error WithdrawError();
 
     // Top level domain
     string public tld = ".matic";
     // Indicates the upper bound of domain length from which the price doesn't decrease anymore, use one higher than intented, e.g if value is 11, the max paid domain is 10
     uint256 public domainLengthPriceUpperBound = 11;
+    uint256 public maxDomainLength = 20;
+    uint256 public minDomainLength = 0;
     // Price units, the number zeroes it has (wei), more zeroes = bigger price
     uint256 public priceUnits = 17;
 
@@ -30,8 +42,8 @@ contract Domains is ERC721URIStorage {
         string data;
     }
 
-    mapping(string => Domain) private domains;
-    mapping(uint256 => string) private tokenToDomain;
+    mapping(string => Domain) private domainNameToDomainObject;
+    mapping(uint256 => string) private tokenIdToDomain;
 
     constructor() payable ERC721("Polygon Name Service", "PNS") {}
 
@@ -39,32 +51,28 @@ contract Domains is ERC721URIStorage {
         external
         payable
     {
-        require(
-            !isRegistered(domainName),
-            "Domain has already been registered"
-        );
-        require(
-            msg.value == getPrice(domainName),
-            "Transaction payment does not equal the price of the domain"
-        );
+        if (isRegistered(domainName)) revert AlreadyRegistered();
+        if (!checkNameValidity(domainName)) revert NotValidName();
+        if (!(msg.value == getPrice(domainName))) revert NotEnoughEtherPaid();
 
         Domain memory domain = Domain(msg.sender, data);
-        domains[domainName] = domain;
+        domainNameToDomainObject[domainName] = domain;
         uint256 tokenId = _tokenIds.current();
-        tokenToDomain[tokenId] = domainName;
+        tokenIdToDomain[tokenId] = domainName;
         _tokenIds.increment();
         mint(msg.sender, tokenId);
         string memory name = string.concat(domainName, tld);
         string memory svg = string.concat(svgStart, name, svgEnd);
         _setTokenURI(tokenId, getJsonUri(name, svg));
+        emit Registered(msg.sender, domainName);
     }
 
     function modifyData(string calldata domainName, string calldata data)
         external
     {
-        require(isRegistered(domainName), "Domain has not been registered");
-        require(isDomainOwner(domainName), "Sender does not own this domain");
-        domains[domainName].data = data;
+        if (!isRegistered(domainName)) revert NotRegistered();
+        if (!isDomainOwner(domainName)) revert NotOwner();
+        domainNameToDomainObject[domainName].data = data;
     }
 
     function getDomainData(string calldata domainName)
@@ -72,7 +80,22 @@ contract Domains is ERC721URIStorage {
         view
         returns (Domain memory)
     {
-        return domains[domainName];
+        return domainNameToDomainObject[domainName];
+    }
+
+    function withdraw() external onlyOwner {
+        uint256 balance = address(this).balance;
+        (bool success, ) = msg.sender.call{value: balance}("");
+        if (!success) revert WithdrawError();
+    }
+
+    function getAllDomains() external view returns (string[] memory) {
+        uint256 tokenIds = _tokenIds.current();
+        string[] memory allNames = new string[](tokenIds);
+        for (uint256 i = 0; i < tokenIds; i++) {
+            allNames[i] = tokenIdToDomain[i];
+        }
+        return allNames;
     }
 
     // Price ranges from 1 (one letter) to 0.1 (maxPayableDomainLength) to free (longer than maxPayableDomainLength)
@@ -82,7 +105,6 @@ contract Domains is ERC721URIStorage {
         returns (uint256)
     {
         uint256 domainLength = StringUtils.length(domainName);
-        require(domainLength > 0, "Domain is too short");
         uint256 paymentVar = domainLength;
         if (domainLength > domainLengthPriceUpperBound) {
             paymentVar = domainLengthPriceUpperBound;
@@ -95,7 +117,17 @@ contract Domains is ERC721URIStorage {
         address to,
         uint256 tokenId
     ) internal override {
-        domains[tokenToDomain[tokenId]].owner = to;
+        domainNameToDomainObject[tokenIdToDomain[tokenId]].owner = to;
+    }
+
+    function checkNameValidity(string calldata domainName)
+        private
+        view
+        returns (bool)
+    {
+        uint256 domainLength = StringUtils.length(domainName);
+        return
+            domainLength > minDomainLength && domainLength <= maxDomainLength;
     }
 
     function mint(address to, uint256 tokenId) private {
@@ -109,7 +141,7 @@ contract Domains is ERC721URIStorage {
         view
         returns (bool)
     {
-        return domains[domainName].owner != address(0);
+        return domainNameToDomainObject[domainName].owner != address(0);
     }
 
     function isDomainOwner(string calldata domainName)
@@ -117,7 +149,7 @@ contract Domains is ERC721URIStorage {
         view
         returns (bool)
     {
-        return msg.sender == domains[domainName].owner;
+        return msg.sender == domainNameToDomainObject[domainName].owner;
     }
 
     function getJsonUri(string memory name, string memory svg)

@@ -7,7 +7,7 @@ env.config();
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.17",
+    version: "0.8.16",
     settings: {
       optimizer: {
         enabled: true,
@@ -36,7 +36,6 @@ task("accounts", "Prints the list of accounts", async () => {
   //@ts-ignore ethers is injected
 
   const accounts = await ethers.getSigners();
-
   for (const account of accounts) {
     console.log(account.address);
   }
