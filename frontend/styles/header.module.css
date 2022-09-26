@@ -1,0 +1,25 @@
+.header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100vw;
+}
+
+.headertext {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    font-size: 27px;
+    color: white;
+}
+
+.headerdisconnect {
+    background-color: #8247e5;
+    color: white;
+    border-radius: 5px;
+    padding: 6px;
+    font-size: 20px;
+    margin-right: 22.5px;
+}
