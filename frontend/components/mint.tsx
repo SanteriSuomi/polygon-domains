@@ -1,4 +1,5 @@
 import { ethers, BigNumber } from "ethers";
+import React, { Fragment } from "react";
 
 import styles from "../styles/mint.module.css";
 
@@ -19,6 +20,18 @@ const Mint: React.FC<MintProps> = ({
 	mintDomain,
 	domainPrice,
 }) => {
+	const onDomainInputChanged = async (
+		event: React.ChangeEvent<HTMLInputElement>
+	) => {
+		const value = event.currentTarget.value;
+		if (!value) {
+			setDomainPrice("");
+			return;
+		}
+		setDomainPrice((await getDomainPrice(value)).toString());
+		setDomainName(value);
+	};
+
 	return (
 		<div className={styles.walletconnectedcontent}>
 			<p className={styles.minttitle}>Mint a Domain</p>
@@ -27,23 +40,15 @@ const Mint: React.FC<MintProps> = ({
 					<input
 						className={styles.mintdomaininput}
 						placeholder="domain name"
-						onChange={async (event) => {
-							const value = event.currentTarget.value;
-							if (!value) {
-								setDomainPrice("");
-								return;
-							}
-							setDomainPrice(
-								(await getDomainPrice(value)).toString()
-							);
-							setDomainName(value);
-						}}
+						onChange={onDomainInputChanged}
 					></input>
 					<div className={styles.mintdomaintld}>.matic</div>
 					<div className={styles.mintdomainprice}>
-						{domainPrice.length > 0
-							? `${ethers.utils.formatEther(domainPrice)} matic`
-							: ""}
+						{domainPrice.length > 0 ? (
+							`${ethers.utils.formatEther(domainPrice)} matic`
+						) : (
+							<Fragment></Fragment>
+						)}
 					</div>
 				</div>
 				<input

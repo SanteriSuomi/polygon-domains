@@ -8,19 +8,18 @@ import contractJson from "../public/abi/Domains.json";
 import Header from "../components/header";
 import WalletNotConnected from "../components/walletnotconnected";
 import Mint from "../components/mint";
+import { CONTRACT_ADDRESS, CHAIN_ID } from "../utils/constants";
 
 interface Data {
-	account?: string;
-	connectText: string;
+	connectButton?: { enabled: boolean; connectText: string };
 	contract?: Contract;
 	signer?: ethers.providers.JsonRpcSigner;
+	address?: string;
 }
-
-const CONTRACT_ADDRESS = "0xDD07A3dDA0664804A81Ce8b2D38E6157c477Ed5a";
 
 const Home: NextPage = () => {
 	const [data, setData] = useState<Data>({
-		connectText: "No wallet found",
+		connectButton: { enabled: true, connectText: "No wallet found" },
 	});
 	const [connecting, setConnecting] = useState(false);
 	const [domainName, setDomainName] = useState("");
@@ -32,8 +31,7 @@ const Home: NextPage = () => {
 			alert("No domain name selected");
 			return;
 		}
-		const { ethereum } = window as any;
-		if (ethereum) {
+		try {
 			const txn: ethers.ContractTransaction =
 				await data.contract?.register(domainName, domainData, {
 					value: domainPrice,
@@ -47,6 +45,8 @@ const Home: NextPage = () => {
 			} else {
 				alert("Something went wrong with the transaction");
 			}
+		} catch (error: any) {
+			alert(error.reason);
 		}
 	};
 
@@ -55,7 +55,7 @@ const Home: NextPage = () => {
 	};
 
 	const createObjects = (ethereum: any) => {
-		const provider = new ethers.providers.Web3Provider(ethereum);
+		const provider = new ethers.providers.Web3Provider(ethereum, "any");
 		const signer = provider.getSigner();
 		return {
 			contract: new ethers.Contract(
@@ -64,23 +64,27 @@ const Home: NextPage = () => {
 				signer
 			),
 			signer: signer,
+			provider: provider,
 		};
 	};
 
 	const connectWallet = async () => {
+		if (data.connectButton?.enabled === false) {
+			return;
+		}
 		const { ethereum } = window as any;
 		try {
 			setConnecting(true);
-			const accounts = await ethereum.request({
+			await ethereum.request({
 				method: "eth_requestAccounts",
 			});
 			setConnecting(false);
 			const objects = createObjects(ethereum);
 			setData({
 				...data,
-				account: accounts[0],
 				contract: objects.contract,
 				signer: objects.signer,
+				address: await objects.signer.getAddress(),
 			});
 		} catch (error: any) {
 			setConnecting(false);
@@ -88,7 +92,59 @@ const Home: NextPage = () => {
 		}
 	};
 
-	const checkWalletConnection = async () => {
+	const checkWalletConnection = async (
+		ethereum: any,
+		objects: {
+			contract: Contract;
+			signer: ethers.providers.JsonRpcSigner;
+			provider: ethers.providers.Web3Provider;
+		}
+	) => {
+		const accounts = await ethereum.request({ method: "eth_accounts" });
+		const { chainId } = await objects.provider.getNetwork();
+		if (chainId === CHAIN_ID) {
+			if (accounts.length !== 0) {
+				console.log("Authorized account found");
+				setData({
+					...data,
+					contract: objects.contract,
+					signer: objects.signer,
+					address: await objects.signer.getAddress(),
+				});
+			} else {
+				console.log("No authorized accounts found");
+				setData({
+					...data,
+					connectButton: {
+						enabled: true,
+						connectText: "Connect",
+					},
+				});
+			}
+		} else {
+			setData({
+				...data,
+				connectButton: {
+					enabled: false,
+					connectText: "Wrong network",
+				},
+			});
+		}
+	};
+
+	const onChainChanged = (_: any, oldNetwork: any) => {
+		if (oldNetwork) {
+			window.location.reload();
+		}
+	};
+
+	const onAccountsChanged = (accounts: string[]) => {
+		if (accounts.length === 0) {
+			window.location.reload();
+		}
+	};
+
+	useEffect(() => {
 		const { ethereum } = window as any;
 		if (ethereum) {
 			console.log("MetaMask found");
@@ -96,28 +152,13 @@ const Home: NextPage = () => {
 			console.warn("No MetaMask found");
 			return;
 		}
-
-		const accounts = await ethereum.request({ method: "eth_accounts" });
-		if (accounts.length !== 0) {
-			console.log("Authorized account found");
-			const objects = createObjects(ethereum);
-			setData({
-				...data,
-				account: accounts[0],
-				contract: objects.contract,
-				signer: objects.signer,
-			});
-		} else {
-			console.log("No authorized accounts found");
-			setData({
-				...data,
-				connectText: "Connect",
-			});
-		}
-	};
-
-	useEffect(() => {
-		checkWalletConnection();
+		const objects = createObjects(ethereum);
+		checkWalletConnection(ethereum, objects);
+		objects.provider.on("network", onChainChanged);
+		ethereum.on("accountsChanged", onAccountsChanged);
+		return () => {
+			objects.provider.off("network", onChainChanged);
+		};
 	}, []);
 
 	return (
@@ -149,7 +190,7 @@ const Home: NextPage = () => {
 			<div className={styles.container}>
 				<Header data={data}></Header>
 				<div className={styles.content}>
-					{data.account ? (
+					{data.signer ? (
 						<Mint
 							setDomainPrice={setDomainPrice}
 							getDomainPrice={getDomainPrice}

@@ -10,7 +10,7 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ data }) => {
-	const accountLength = data.account?.length ?? 5;
+	const accountLength = data.address?.length ?? 5;
 	return (
 		<div className={styles.header}>
 			<div className={styles.headertext}>
@@ -22,11 +22,10 @@ const Header: React.FC<HeaderProps> = ({ data }) => {
 				></Image>
 				<p>Polygon Domains</p>
 			</div>
-			{data.account ? (
-				<div className={styles.headerdisconnect}>{`${data.account.slice(
-					0,
-					5
-				)}...${data.account?.slice(
+			{data.signer ? (
+				<div
+					className={styles.headerdisconnect}
+				>{`${data.address?.slice(0, 5)}...${data.address?.slice(
 					accountLength - 5,
 					accountLength
 				)}`}</div>

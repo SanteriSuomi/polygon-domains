@@ -34,7 +34,7 @@ const WalletNotConnected: React.FC<WalletNotConnectedProps> = ({
 					></Image>
 				) : (
 					<div className={styles.connectbuttontext}>
-						{data.connectText}
+						{data.connectButton?.connectText}
 					</div>
 				)}
 			</div>
