@@ -7,15 +7,9 @@ import styles from "../styles/index.module.css";
 import contractJson from "../public/abi/Domains.json";
 import Header from "../components/header";
 import WalletNotConnected from "../components/walletnotconnected";
-import Mint from "../components/mint";
+import WalletConnected from "../components/walletconnected";
 import { CONTRACT_ADDRESS, CHAIN_ID } from "../utils/constants";
-
-interface Data {
-	connectButton?: { enabled: boolean; connectText: string };
-	contract?: Contract;
-	signer?: ethers.providers.JsonRpcSigner;
-	address?: string;
-}
+import { Data, Domain } from "../types/types";
 
 const Home: NextPage = () => {
 	const [data, setData] = useState<Data>({
@@ -132,6 +126,17 @@ const Home: NextPage = () => {
 		}
 	};
 
+	const getOwnedDomains = async (
+		address?: string
+	): Promise<Domain[] | undefined> => {
+		if (!address) {
+			console.warn("getOwnedDomains: address is undefined");
+			return;
+		}
+		const domains: Domain[] = await data.contract?.getOwnedDomains(address);
+		console.log(domains[0].uri);
+	};
+
 	const onChainChanged = (_: any, oldNetwork: any) => {
 		if (oldNetwork) {
 			window.location.reload();
@@ -189,28 +194,27 @@ const Home: NextPage = () => {
 
 			<div className={styles.container}>
 				<Header data={data}></Header>
-				<div className={styles.content}>
-					{data.signer ? (
-						<Mint
-							setDomainPrice={setDomainPrice}
-							getDomainPrice={getDomainPrice}
-							setDomainName={setDomainName}
-							setDomainData={setDomainData}
-							mintDomain={mintDomain}
-							domainPrice={domainPrice}
-						></Mint>
-					) : (
-						<WalletNotConnected
-							connectWallet={connectWallet}
-							connecting={connecting}
-							data={data}
-						></WalletNotConnected>
-					)}
-				</div>
+				{data.signer ? (
+					<WalletConnected
+						setDomainPrice={setDomainPrice}
+						getDomainPrice={getDomainPrice}
+						setDomainName={setDomainName}
+						setDomainData={setDomainData}
+						mintDomain={mintDomain}
+						getOwnedDomains={getOwnedDomains}
+						domainPrice={domainPrice}
+						data={data}
+					></WalletConnected>
+				) : (
+					<WalletNotConnected
+						connectWallet={connectWallet}
+						connecting={connecting}
+						data={data}
+					></WalletNotConnected>
+				)}
 			</div>
 		</>
 	);
 };
 
 export default Home;
-export type { Data };

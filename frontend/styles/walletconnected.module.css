@@ -1,0 +1,32 @@
+.statebuttonswrapper,
+.walletconnectedcontent {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+}
+
+.statebuttonswrapper {
+    top: 40%;
+}
+
+.walletconnectedcontent {
+    top: 50%;
+}
+
+.statebuttons {
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 15px;
+}
+
+.statebuttons:hover {
+    background-color: #590bdf;
+}
+
+.contenttitle {
+    font-size: 22.5px;
+    display: grid;
+    place-items: center;
+}

@@ -33,35 +33,32 @@ const Mint: React.FC<MintProps> = ({
 	};
 
 	return (
-		<div className={styles.walletconnectedcontent}>
-			<p className={styles.minttitle}>Mint a Domain</p>
-			<div className={styles.mintform}>
-				<div className={styles.mintdomaininputwrapper}>
-					<input
-						className={styles.mintdomaininput}
-						placeholder="domain name"
-						onChange={onDomainInputChanged}
-					></input>
-					<div className={styles.mintdomaintld}>.matic</div>
-					<div className={styles.mintdomainprice}>
-						{domainPrice.length > 0 ? (
-							`${ethers.utils.formatEther(domainPrice)} matic`
-						) : (
-							<Fragment></Fragment>
-						)}
-					</div>
-				</div>
+		<div className={styles.mintform}>
+			<div className={styles.mintdomaininputwrapper}>
 				<input
-					className={styles.mintdatainput}
-					placeholder="domain data (optional)"
-					onChange={(event) => {
-						setDomainData(event.currentTarget.value);
-					}}
+					className={styles.mintdomaininput}
+					placeholder="domain name"
+					onChange={onDomainInputChanged}
 				></input>
-				<button className={styles.mintsubmit} onClick={mintDomain}>
-					Mint
-				</button>
+				<div className={styles.mintdomaintld}>.matic</div>
+				<div className={styles.mintdomainprice}>
+					{domainPrice.length > 0 ? (
+						`${ethers.utils.formatEther(domainPrice)} matic`
+					) : (
+						<Fragment></Fragment>
+					)}
+				</div>
 			</div>
+			<input
+				className={styles.mintdatainput}
+				placeholder="domain data (optional)"
+				onChange={(event) => {
+					setDomainData(event.currentTarget.value);
+				}}
+			></input>
+			<button className={styles.mintsubmit} onClick={mintDomain}>
+				Mint
+			</button>
 		</div>
 	);
 };

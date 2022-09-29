@@ -9,8 +9,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 import {StringUtils} from "./libraries/StringUtils.sol";
 
-import "hardhat/console.sol";
-
 contract Domains is ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
 
@@ -40,6 +38,12 @@ contract Domains is ERC721URIStorage, Ownable {
     struct Domain {
         address owner;
         string data;
+    }
+
+    struct DomainWithURI {
+        address owner;
+        string data;
+        string uri;
     }
 
     mapping(string => Domain) private domainNameToDomainObject;
@@ -96,6 +100,30 @@ contract Domains is ERC721URIStorage, Ownable {
             allNames[i] = tokenIdToDomain[i];
         }
         return allNames;
+    }
+
+    function getOwnedDomains(address owner)
+        external
+        view
+        returns (DomainWithURI[] memory)
+    {
+        uint256 ownerTokenAmount = balanceOf(owner);
+        uint256 ownerDomainIndex = 0;
+        DomainWithURI[] memory ownerDomains = new DomainWithURI[](
+            ownerTokenAmount
+        );
+        uint256 tokenIds = _tokenIds.current();
+        for (uint256 i = 0; i < tokenIds; i++) {
+            Domain memory domain = domainNameToDomainObject[tokenIdToDomain[i]];
+            if (domain.owner == owner) {
+                ownerDomains[ownerDomainIndex++] = DomainWithURI(
+                    domain.owner,
+                    domain.data,
+                    tokenURI(i)
+                );
+            }
+        }
+        return ownerDomains;
     }
 
     // Price ranges from 1 (one letter) to 0.1 (maxPayableDomainLength) to free (longer than maxPayableDomainLength)

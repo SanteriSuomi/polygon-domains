@@ -100,8 +100,14 @@ describe("Domains contract", () => {
         expect(parsedNumber).to.equal(totalMintPriceParsed)
     })
 
-    it("Can get domains", async () => {
+    it("Can get all domains", async () => {
         const domains = await contract.getAllDomains();
         expect((() => domains.length === 2 && domains[0] === "test" && domains[1] === "test1")()).to.be.true
+    })
+
+    it("Can get owned domains", async () => {
+        const address = await otherAccounts[1].getAddress()
+        const domains = await contract.getOwnedDomains(address);
+        expect((() => domains.length === 2 && domains[0].owner === address && domains[1].owner === address)()).to.be.true
     })
 })
