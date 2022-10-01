@@ -40,7 +40,8 @@ contract Domains is ERC721URIStorage, Ownable {
         string data;
     }
 
-    struct DomainWithURI {
+    struct DomainComplete {
+        string name;
         address owner;
         string data;
         string uri;
@@ -105,18 +106,20 @@ contract Domains is ERC721URIStorage, Ownable {
     function getOwnedDomains(address owner)
         external
         view
-        returns (DomainWithURI[] memory)
+        returns (DomainComplete[] memory)
     {
         uint256 ownerTokenAmount = balanceOf(owner);
         uint256 ownerDomainIndex = 0;
-        DomainWithURI[] memory ownerDomains = new DomainWithURI[](
+        DomainComplete[] memory ownerDomains = new DomainComplete[](
             ownerTokenAmount
         );
         uint256 tokenIds = _tokenIds.current();
         for (uint256 i = 0; i < tokenIds; i++) {
-            Domain memory domain = domainNameToDomainObject[tokenIdToDomain[i]];
+            string memory domainName = tokenIdToDomain[i];
+            Domain memory domain = domainNameToDomainObject[domainName];
             if (domain.owner == owner) {
-                ownerDomains[ownerDomainIndex++] = DomainWithURI(
+                ownerDomains[ownerDomainIndex++] = DomainComplete(
+                    domainName,
                     domain.owner,
                     domain.data,
                     tokenURI(i)

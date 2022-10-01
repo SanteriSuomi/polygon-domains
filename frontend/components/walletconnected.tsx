@@ -2,7 +2,7 @@ import { BigNumber } from "ethers";
 import { useState } from "react";
 
 import styles from "../styles/walletconnected.module.css";
-import { Data } from "../types/types";
+import { Data, Domain } from "../types/types";
 import Mint from "./mint";
 import MyDomains from "./mydomains";
 
@@ -12,7 +12,7 @@ interface WalletConnectedProps {
 	setDomainName: (name: string) => void;
 	setDomainData: (data: string) => void;
 	mintDomain: () => void;
-	getOwnedDomains: (address?: string) => void;
+	getOwnedDomains: (address?: string) => Promise<Domain[]>;
 	domainPrice: string;
 	data: Data;
 }

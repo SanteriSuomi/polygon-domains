@@ -1,0 +1,19 @@
+.popup {
+    background-color: #8247e5;
+    color: white;
+    animation: anim 1s linear 1 ease-out;
+}
+
+@keyframes anim {
+    0% {
+        position: absolute;
+        left: 5%;
+        top: 110%;
+    }
+
+    100% {
+        position: absolute;
+        left: 5%;
+        top: 90%;
+    }
+}

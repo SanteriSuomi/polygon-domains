@@ -8,9 +8,11 @@ interface Data {
 }
 
 interface Domain {
+    name: string;
     owner: string;
     data: string;
     uri?: string;
+    image?: string;
 }
 
 export type { Data, Domain };

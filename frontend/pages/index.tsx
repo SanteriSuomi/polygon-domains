@@ -10,6 +10,7 @@ import WalletNotConnected from "../components/walletnotconnected";
 import WalletConnected from "../components/walletconnected";
 import { CONTRACT_ADDRESS, CHAIN_ID } from "../utils/constants";
 import { Data, Domain } from "../types/types";
+import Popup from "../components/popup";
 
 const Home: NextPage = () => {
 	const [data, setData] = useState<Data>({
@@ -19,6 +20,12 @@ const Home: NextPage = () => {
 	const [domainName, setDomainName] = useState("");
 	const [domainPrice, setDomainPrice] = useState("");
 	const [domainData, setDomainData] = useState("");
+
+	const [popup, setPopup] = useState({
+		enabled: false,
+		registrant: "",
+		domainName: "",
+	});
 
 	const mintDomain = async () => {
 		if (!domainName || domainName.length < 1) {
@@ -126,15 +133,38 @@ const Home: NextPage = () => {
 		}
 	};
 
-	const getOwnedDomains = async (
-		address?: string
-	): Promise<Domain[] | undefined> => {
+	const getOwnedDomains = async (address?: string): Promise<Domain[]> => {
 		if (!address) {
 			console.warn("getOwnedDomains: address is undefined");
-			return;
+			return [];
 		}
-		const domains: Domain[] = await data.contract?.getOwnedDomains(address);
-		console.log(domains[0].uri);
+
+		function decodeUris(domains: Domain[]) {
+			const decodedDomains: Domain[] = [];
+			domains.forEach((domain: Domain) => {
+				const base64 = domain.uri?.split(",")[1];
+				if (!base64) {
+					console.warn(
+						`Could not decode uri ${domain.uri} for domain ${domain.name} `
+					);
+					return [];
+				}
+				const decoded = Buffer.from(base64, "base64").toString();
+				const uriObject = JSON.parse(decoded);
+				const imageBase64 = uriObject.image.split(",")[1];
+				const image = Buffer.from(imageBase64, "base64").toString();
+				decodedDomains.push({
+					data: domain.data,
+					name: domain.name,
+					owner: domain.owner,
+					uri: domain.uri,
+					image: image,
+				});
+			});
+			return decodedDomains;
+		}
+
+		return decodeUris(await data.contract?.getOwnedDomains(address));
 	};
 
 	const onChainChanged = (_: any, oldNetwork: any) => {
@@ -149,6 +179,16 @@ const Home: NextPage = () => {
 		}
 	};
 
+	const onNewDomainRegistered = (registrant: string, domainName: string) => {
+		if (registrant !== data.address) {
+			setPopup({
+				enabled: true,
+				registrant: registrant,
+				domainName: domainName,
+			});
+		}
+	};
+
 	useEffect(() => {
 		const { ethereum } = window as any;
 		if (ethereum) {
@@ -160,6 +200,7 @@ const Home: NextPage = () => {
 		const objects = createObjects(ethereum);
 		checkWalletConnection(ethereum, objects);
 		objects.provider.on("network", onChainChanged);
+		objects.contract.on("Registered", onNewDomainRegistered);
 		ethereum.on("accountsChanged", onAccountsChanged);
 		return () => {
 			objects.provider.off("network", onChainChanged);
@@ -168,6 +209,17 @@ const Home: NextPage = () => {
 
 	return (
 		<>
+			<button
+				onClick={() => {
+					setPopup({
+						enabled: true,
+						registrant: "test",
+						domainName: "test",
+					});
+				}}
+			>
+				Popup
+			</button>
 			<Head>
 				<title>Polygon Domains</title>
 				<link
@@ -211,6 +263,14 @@ const Home: NextPage = () => {
 						connecting={connecting}
 						data={data}
 					></WalletNotConnected>
+				)}
+				{popup.enabled ? (
+					<Popup
+						registrant={popup.registrant}
+						domainName={popup.domainName}
+					></Popup>
+				) : (
+					""
 				)}
 			</div>
 		</>

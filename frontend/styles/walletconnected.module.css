@@ -1,17 +1,17 @@
 .statebuttonswrapper,
 .walletconnectedcontent {
     position: absolute;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    left: 50vw;
+    transform: translate(-50%, 0);
     color: white;
 }
 
 .statebuttonswrapper {
-    top: 40%;
+    top: 40vh;
 }
 
 .walletconnectedcontent {
-    top: 50%;
+    top: 44vh;
 }
 
 .statebuttons {

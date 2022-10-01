@@ -1,0 +1,14 @@
+.gallery {
+    width: 100vw;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+}
+
+.galleryItem {
+    width: 150px;
+    height: 150px;
+}
