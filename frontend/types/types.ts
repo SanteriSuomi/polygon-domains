@@ -15,4 +15,14 @@ interface Domain {
     image?: string;
 }
 
-export type { Data, Domain };
+interface Objects {
+    contract: Contract;
+    signer: ethers.providers.JsonRpcSigner;
+    provider: ethers.providers.Web3Provider;
+}
+
+type Context = { activatePopup: ActivatePopupFunc, data: Data } | undefined
+
+type ActivatePopupFunc = (text?: string) => void;
+
+export type { Data, Domain, Objects, Context, ActivatePopupFunc };

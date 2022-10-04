@@ -2,6 +2,7 @@ html,
 body {
   padding: 0;
   margin: 0;
+  position: relative;
   background-color: #000000;
   font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
 }

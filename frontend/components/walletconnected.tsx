@@ -1,37 +1,17 @@
-import { BigNumber } from "ethers";
 import { useState } from "react";
 
 import styles from "../styles/walletconnected.module.css";
-import { Data, Domain } from "../types/types";
 import Mint from "./mint";
 import MyDomains from "./mydomains";
 
-interface WalletConnectedProps {
-	setDomainPrice: (price: string) => void;
-	getDomainPrice: (domain: string) => Promise<BigNumber>;
-	setDomainName: (name: string) => void;
-	setDomainData: (data: string) => void;
-	mintDomain: () => void;
-	getOwnedDomains: (address?: string) => Promise<Domain[]>;
-	domainPrice: string;
-	data: Data;
-}
+interface WalletConnectedProps {}
 
 enum ContentState {
 	Mint,
 	MyDomains,
 }
 
-const WalletConnected: React.FC<WalletConnectedProps> = ({
-	setDomainPrice,
-	getDomainPrice,
-	setDomainName,
-	setDomainData,
-	mintDomain,
-	getOwnedDomains,
-	domainPrice,
-	data,
-}) => {
+const WalletConnected: React.FC<WalletConnectedProps> = () => {
 	const [contentState, setContentState] = useState({
 		state: ContentState.Mint,
 		mintButton: { backgroundColor: "#290666" },
@@ -43,24 +23,14 @@ const WalletConnected: React.FC<WalletConnectedProps> = ({
 			return (
 				<>
 					<p className={styles.contenttitle}>Mint a Domain</p>
-					<Mint
-						setDomainPrice={setDomainPrice}
-						getDomainPrice={getDomainPrice}
-						setDomainName={setDomainName}
-						setDomainData={setDomainData}
-						mintDomain={mintDomain}
-						domainPrice={domainPrice}
-					></Mint>
+					<Mint></Mint>
 				</>
 			);
 		} else {
 			return (
 				<>
 					<p className={styles.contenttitle}>My Domains</p>
-					<MyDomains
-						getOwnedDomains={getOwnedDomains}
-						data={data}
-					></MyDomains>
+					<MyDomains></MyDomains>
 				</>
 			);
 		}

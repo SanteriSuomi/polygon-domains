@@ -2,15 +2,16 @@ import Image from "next/image";
 
 import styles from "../styles/header.module.css";
 import logo from "../public/images/polygon_logo.svg";
-import { Data } from "../pages";
-import { Fragment } from "react";
+import { useContext } from "react";
+import { appContext } from "../utils/context";
 
-interface HeaderProps {
-	data: Data;
-}
+interface HeaderProps {}
 
-const Header: React.FC<HeaderProps> = ({ data }) => {
-	const accountLength = data.address?.length ?? 5;
+const Header: React.FC<HeaderProps> = () => {
+	const context = useContext(appContext);
+
+	const accountLength = context?.data.address?.length ?? 5;
+	const address = context?.data.address;
 	return (
 		<div className={styles.header}>
 			<div className={styles.headertext}>
@@ -22,15 +23,13 @@ const Header: React.FC<HeaderProps> = ({ data }) => {
 				></Image>
 				<p>Polygon Domains</p>
 			</div>
-			{data.signer ? (
-				<div
-					className={styles.headerdisconnect}
-				>{`${data.address?.slice(0, 5)}...${data.address?.slice(
-					accountLength - 5,
-					accountLength
-				)}`}</div>
+			{context?.data.signer ? (
+				<div className={styles.headerdisconnect}>{`${address?.slice(
+					0,
+					5
+				)}...${address?.slice(accountLength - 5, accountLength)}`}</div>
 			) : (
-				<Fragment></Fragment>
+				<></>
 			)}
 		</div>
 	);

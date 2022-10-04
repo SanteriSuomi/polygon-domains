@@ -3,19 +3,20 @@ import Image from "next/image";
 import animation from "../public/images/polygon_rotating.gif";
 import styles from "../styles/walletnotconnected.module.css";
 import loading from "../public/images/loading.gif";
-import { Data } from "../pages";
+import { useContext } from "react";
+import { appContext } from "../utils/context";
 
 interface WalletNotConnectedProps {
 	connectWallet: () => void;
 	connecting: boolean;
-	data: Data;
 }
 
 const WalletNotConnected: React.FC<WalletNotConnectedProps> = ({
 	connectWallet,
 	connecting,
-	data,
 }) => {
+	const context = useContext(appContext);
+
 	return (
 		<div className={styles.connectelements}>
 			<Image
@@ -34,7 +35,7 @@ const WalletNotConnected: React.FC<WalletNotConnectedProps> = ({
 					></Image>
 				) : (
 					<div className={styles.connectbuttontext}>
-						{data.connectButton?.connectText}
+						{context?.data.connectButton?.connectText}
 					</div>
 				)}
 			</div>

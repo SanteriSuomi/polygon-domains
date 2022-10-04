@@ -1,61 +1,31 @@
 import type { NextPage } from "next";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Head from "next/head";
-import { ethers, BigNumber, Contract } from "ethers";
 
 import styles from "../styles/index.module.css";
-import contractJson from "../public/abi/Domains.json";
 import Header from "../components/header";
 import WalletNotConnected from "../components/walletnotconnected";
 import WalletConnected from "../components/walletconnected";
-import { CONTRACT_ADDRESS, CHAIN_ID } from "../utils/constants";
-import { Data, Domain } from "../types/types";
+import { Data, ActivatePopupFunc, Objects } from "../types/types";
 import Popup from "../components/popup";
+import { ethers } from "ethers";
+import { CONTRACT_ADDRESS, CHAIN_ID } from "../utils/constants";
+import contractJson from "../public/abi/Domains.json";
+import { appContext } from "../utils/context";
 
 const Home: NextPage = () => {
 	const [data, setData] = useState<Data>({
 		connectButton: { enabled: true, connectText: "No wallet found" },
 	});
 	const [connecting, setConnecting] = useState(false);
-	const [domainName, setDomainName] = useState("");
-	const [domainPrice, setDomainPrice] = useState("");
-	const [domainData, setDomainData] = useState("");
 
-	const [popup, setPopup] = useState({
-		enabled: false,
-		registrant: "",
-		domainName: "",
-	});
-
-	const mintDomain = async () => {
-		if (!domainName || domainName.length < 1) {
-			alert("No domain name selected");
-			return;
-		}
-		try {
-			const txn: ethers.ContractTransaction =
-				await data.contract?.register(domainName, domainData, {
-					value: domainPrice,
-				});
-			const receipt = await txn.wait();
-			if (receipt.status === 1) {
-				alert(
-					"Domain minted! Transaction: https://mumbai.polygonscan.com/tx/" +
-						txn.hash
-				);
-			} else {
-				alert("Something went wrong with the transaction");
-			}
-		} catch (error: any) {
-			alert(error.reason);
-		}
+	const activatePopup = (text?: string) => {
+		popupActivateRef.current?.(text);
 	};
 
-	const getDomainPrice = async (domainName: string): Promise<BigNumber> => {
-		return data.contract?.getPrice(domainName);
-	};
+	const popupActivateRef = useRef<ActivatePopupFunc>(null);
 
-	const createObjects = (ethereum: any) => {
+	const createObjects = (ethereum: any): Objects => {
 		const provider = new ethers.providers.Web3Provider(ethereum, "any");
 		const signer = provider.getSigner();
 		return {
@@ -89,18 +59,11 @@ const Home: NextPage = () => {
 			});
 		} catch (error: any) {
 			setConnecting(false);
-			alert(error.message);
+			activatePopup(error.message);
 		}
 	};
 
-	const checkWalletConnection = async (
-		ethereum: any,
-		objects: {
-			contract: Contract;
-			signer: ethers.providers.JsonRpcSigner;
-			provider: ethers.providers.Web3Provider;
-		}
-	) => {
+	const checkWalletConnection = async (ethereum: any, objects: Objects) => {
 		const accounts = await ethereum.request({ method: "eth_accounts" });
 		const { chainId } = await objects.provider.getNetwork();
 		if (chainId === CHAIN_ID) {
@@ -133,40 +96,6 @@ const Home: NextPage = () => {
 		}
 	};
 
-	const getOwnedDomains = async (address?: string): Promise<Domain[]> => {
-		if (!address) {
-			console.warn("getOwnedDomains: address is undefined");
-			return [];
-		}
-
-		function decodeUris(domains: Domain[]) {
-			const decodedDomains: Domain[] = [];
-			domains.forEach((domain: Domain) => {
-				const base64 = domain.uri?.split(",")[1];
-				if (!base64) {
-					console.warn(
-						`Could not decode uri ${domain.uri} for domain ${domain.name} `
-					);
-					return [];
-				}
-				const decoded = Buffer.from(base64, "base64").toString();
-				const uriObject = JSON.parse(decoded);
-				const imageBase64 = uriObject.image.split(",")[1];
-				const image = Buffer.from(imageBase64, "base64").toString();
-				decodedDomains.push({
-					data: domain.data,
-					name: domain.name,
-					owner: domain.owner,
-					uri: domain.uri,
-					image: image,
-				});
-			});
-			return decodedDomains;
-		}
-
-		return decodeUris(await data.contract?.getOwnedDomains(address));
-	};
-
 	const onChainChanged = (_: any, oldNetwork: any) => {
 		if (oldNetwork) {
 			window.location.reload();
@@ -181,11 +110,6 @@ const Home: NextPage = () => {
 
 	const onNewDomainRegistered = (registrant: string, domainName: string) => {
 		if (registrant !== data.address) {
-			setPopup({
-				enabled: true,
-				registrant: registrant,
-				domainName: domainName,
-			});
 		}
 	};
 
@@ -209,17 +133,6 @@ const Home: NextPage = () => {
 
 	return (
 		<>
-			<button
-				onClick={() => {
-					setPopup({
-						enabled: true,
-						registrant: "test",
-						domainName: "test",
-					});
-				}}
-			>
-				Popup
-			</button>
 			<Head>
 				<title>Polygon Domains</title>
 				<link
@@ -244,35 +157,23 @@ const Home: NextPage = () => {
 				<meta name="theme-color" content="#ffffff"></meta>
 			</Head>
 
-			<div className={styles.container}>
-				<Header data={data}></Header>
-				{data.signer ? (
-					<WalletConnected
-						setDomainPrice={setDomainPrice}
-						getDomainPrice={getDomainPrice}
-						setDomainName={setDomainName}
-						setDomainData={setDomainData}
-						mintDomain={mintDomain}
-						getOwnedDomains={getOwnedDomains}
-						domainPrice={domainPrice}
-						data={data}
-					></WalletConnected>
-				) : (
-					<WalletNotConnected
-						connectWallet={connectWallet}
-						connecting={connecting}
-						data={data}
-					></WalletNotConnected>
-				)}
-				{popup.enabled ? (
-					<Popup
-						registrant={popup.registrant}
-						domainName={popup.domainName}
-					></Popup>
-				) : (
-					""
-				)}
-			</div>
+			<appContext.Provider
+				value={{ activatePopup: activatePopup, data: data }}
+			>
+				<div className={styles.container}>
+					<Header></Header>
+					{data.signer ? (
+						<WalletConnected></WalletConnected>
+					) : (
+						<WalletNotConnected
+							connectWallet={connectWallet}
+							connecting={connecting}
+						></WalletNotConnected>
+					)}
+
+					<Popup popupActivateRef={popupActivateRef}></Popup>
+				</div>
+			</appContext.Provider>
 		</>
 	);
 };

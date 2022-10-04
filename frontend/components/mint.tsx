@@ -1,25 +1,19 @@
-import { ethers, BigNumber } from "ethers";
-import React, { Fragment } from "react";
+import { ethers } from "ethers";
+import React, { Fragment, useContext, useState } from "react";
 
 import styles from "../styles/mint.module.css";
+import { getDomainPrice, mintDomain } from "../utils/functions";
+import { appContext } from "../utils/context";
 
-interface MintProps {
-	setDomainPrice: (price: string) => void;
-	getDomainPrice: (domain: string) => Promise<BigNumber>;
-	setDomainName: (name: string) => void;
-	setDomainData: (data: string) => void;
-	mintDomain: () => void;
-	domainPrice: string;
-}
+interface MintProps {}
 
-const Mint: React.FC<MintProps> = ({
-	setDomainPrice,
-	getDomainPrice,
-	setDomainName,
-	setDomainData,
-	mintDomain,
-	domainPrice,
-}) => {
+const Mint: React.FC<MintProps> = () => {
+	const [domainPrice, setDomainPrice] = useState("");
+	const [domainData, setDomainData] = useState("");
+	const [domainName, setDomainName] = useState("");
+
+	const context = useContext(appContext);
+
 	const onDomainInputChanged = async (
 		event: React.ChangeEvent<HTMLInputElement>
 	) => {
@@ -28,7 +22,9 @@ const Mint: React.FC<MintProps> = ({
 			setDomainPrice("");
 			return;
 		}
-		setDomainPrice((await getDomainPrice(value)).toString());
+		setDomainPrice(
+			(await getDomainPrice(context?.data.contract!, value)).toString()
+		);
 		setDomainName(value);
 	};
 
@@ -56,7 +52,18 @@ const Mint: React.FC<MintProps> = ({
 					setDomainData(event.currentTarget.value);
 				}}
 			></input>
-			<button className={styles.mintsubmit} onClick={mintDomain}>
+			<button
+				className={styles.mintsubmit}
+				onClick={async () => {
+					await mintDomain(
+						context?.data.contract!,
+						domainName,
+						domainData,
+						domainPrice,
+						context?.activatePopup
+					);
+				}}
+			>
 				Mint
 			</button>
 		</div>
