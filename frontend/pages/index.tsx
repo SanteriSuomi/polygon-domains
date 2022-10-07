@@ -108,8 +108,14 @@ const Home: NextPage = () => {
 		}
 	};
 
-	const onNewDomainRegistered = (registrant: string, domainName: string) => {
-		if (registrant !== data.address) {
+	const onNewDomainRegistered = async (
+		registrant: string,
+		domain: string
+	) => {
+		console.log("Data address: ", data.address);
+		const address = await data.signer?.getAddress();
+		if (registrant !== address) {
+			activatePopup(`New domain ${domain} registered!`);
 		}
 	};
 
@@ -122,12 +128,13 @@ const Home: NextPage = () => {
 			return;
 		}
 		const objects = createObjects(ethereum);
-		checkWalletConnection(ethereum, objects);
 		objects.provider.on("network", onChainChanged);
 		objects.contract.on("Registered", onNewDomainRegistered);
 		ethereum.on("accountsChanged", onAccountsChanged);
+		checkWalletConnection(ethereum, objects);
 		return () => {
 			objects.provider.off("network", onChainChanged);
+			objects.contract.off("Registered", onNewDomainRegistered);
 		};
 	}, []);
 

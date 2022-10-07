@@ -21,8 +21,13 @@ interface Objects {
     provider: ethers.providers.Web3Provider;
 }
 
+interface UpdateDomainState {
+    enabled: boolean;
+    domain?: Domain;
+}
+
 type Context = { activatePopup: ActivatePopupFunc, data: Data } | undefined
 
 type ActivatePopupFunc = (text?: string) => void;
 
-export type { Data, Domain, Objects, Context, ActivatePopupFunc };
+export type { Data, Domain, Objects, UpdateDomainState, Context, ActivatePopupFunc };

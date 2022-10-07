@@ -1,12 +1,15 @@
 import { useContext, useEffect, useState } from "react";
-import { Domain } from "../types/types";
-import styles from "../styles/mydomains.module.css";
+import { Domain, UpdateDomainState } from "../types/types";
 import { appContext } from "../utils/context";
 import { getOwnedDomains } from "../utils/functions";
+import styles from "../styles/mydomains.module.css";
 
 interface MyDomainsProps {}
 
 const MyDomains: React.FC<MyDomainsProps> = () => {
+	const [updateDomain, setUpdateDomain] = useState<UpdateDomainState>({
+		enabled: false,
+	});
 	const [ownedDomains, setOwnedDomains] = useState<Domain[]>();
 
 	const context = useContext(appContext);
@@ -18,6 +21,35 @@ const MyDomains: React.FC<MyDomainsProps> = () => {
 		svg.removeAttribute("width");
 		svg.removeAttribute("height");
 		return svg;
+	};
+
+	const getContent = () => {
+		if (updateDomain?.enabled) {
+			return <div></div>;
+		}
+		return (
+			<>
+				{ownedDomains?.map((domain: Domain, index: number) => {
+					return (
+						<div
+							className={styles.galleryItem}
+							key={index}
+							dangerouslySetInnerHTML={{
+								__html: parseImageString(domain.image!)
+									.outerHTML,
+							}}
+							onClick={() => {
+								setUpdateDomain({
+									enabled: !updateDomain?.enabled,
+									domain: domain,
+								});
+							}}
+						></div>
+					);
+				})}
+				<div>Click to modify domain data</div>
+			</>
+		);
 	};
 
 	useEffect(() => {
@@ -32,21 +64,7 @@ const MyDomains: React.FC<MyDomainsProps> = () => {
 		updateOwnedDomains();
 	}, []);
 
-	return (
-		<div className={styles.gallery}>
-			{ownedDomains?.map((domain: Domain, index: number) => {
-				return (
-					<div
-						className={styles.galleryItem}
-						key={index}
-						dangerouslySetInnerHTML={{
-							__html: parseImageString(domain.image!).outerHTML,
-						}}
-					></div>
-				);
-			})}
-		</div>
-	);
+	return <div className={styles.gallery}>{getContent()}</div>;
 };
 
 export default MyDomains;

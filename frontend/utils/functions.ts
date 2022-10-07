@@ -19,7 +19,7 @@ const mintDomain = async (contract: Contract, domainName: string, domainData: st
             activatePopup?.("Something went wrong with the transaction")
         }
     } catch (error: any) {
-        activatePopup?.(error.reason)
+        activatePopup?.(error.message)
     }
 };
 

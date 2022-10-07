@@ -12,7 +12,12 @@ import {StringUtils} from "./libraries/StringUtils.sol";
 contract Domains is ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
 
-    event Registered(address registrant, string indexed domain);
+    event Registered(
+        address registrant,
+        string domain,
+        address indexed registrantIndexed,
+        string indexed domainIndexed
+    );
 
     error AlreadyRegistered();
     error NotRegistered();
@@ -69,7 +74,7 @@ contract Domains is ERC721URIStorage, Ownable {
         string memory name = string.concat(domainName, tld);
         string memory svg = string.concat(svgStart, name, svgEnd);
         _setTokenURI(tokenId, getJsonUri(name, svg));
-        emit Registered(msg.sender, domainName);
+        emit Registered(msg.sender, domainName, msg.sender, domainName);
     }
 
     function modifyData(string calldata domainName, string calldata data)
