@@ -6,6 +6,7 @@ const mintDomain = async (contract: Contract, domainName: string, domainData: st
         activatePopup?.("No domain name selected")
         return;
     }
+
     try {
         const txn: ContractTransaction =
             await contract.register(domainName, domainData, {
@@ -26,7 +27,6 @@ const mintDomain = async (contract: Contract, domainName: string, domainData: st
 const getDomainPrice = async (contract: Contract, domainName: string): Promise<BigNumber> => {
     return contract.getPrice(domainName);
 };
-
 
 const getOwnedDomains = async (contract: Contract, address?: string): Promise<Domain[]> => {
     if (!address) {
@@ -62,4 +62,19 @@ const getOwnedDomains = async (contract: Contract, address?: string): Promise<Do
     return decodeUris(await contract.getOwnedDomains(address));
 };
 
-export { mintDomain, getDomainPrice, getOwnedDomains }
+const updateDomainData = async (contract: Contract, domainName: string, data: string, activatePopup?: (text: string) => void) => {
+    try {
+        const txn: ContractTransaction =
+            await contract.modifyData(domainName, data);
+        const receipt = await txn.wait();
+        if (receipt.status === 1) {
+            activatePopup?.("Domain data updated!");
+        } else {
+            activatePopup?.("Something went wrong with the transaction")
+        }
+    } catch (error: any) {
+        activatePopup?.(error.message)
+    }
+}
+
+export { mintDomain, getDomainPrice, getOwnedDomains, updateDomainData }

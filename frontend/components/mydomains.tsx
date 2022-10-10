@@ -3,6 +3,7 @@ import { Domain, UpdateDomainState } from "../types/types";
 import { appContext } from "../utils/context";
 import { getOwnedDomains } from "../utils/functions";
 import styles from "../styles/mydomains.module.css";
+import UpdateDomain from "./updatedomain";
 
 interface MyDomainsProps {}
 
@@ -13,6 +14,19 @@ const MyDomains: React.FC<MyDomainsProps> = () => {
 	const [ownedDomains, setOwnedDomains] = useState<Domain[]>();
 
 	const context = useContext(appContext);
+
+	async function updateOwnedDomains() {
+		setOwnedDomains(
+			await getOwnedDomains(
+				context?.data.contract!,
+				context?.data.address
+			)
+		);
+	}
+
+	useEffect(() => {
+		updateOwnedDomains();
+	}, []);
 
 	const parseImageString = (image: string): SVGElement => {
 		const el = new DOMParser().parseFromString(image, "image/svg+xml");
@@ -25,46 +39,44 @@ const MyDomains: React.FC<MyDomainsProps> = () => {
 
 	const getContent = () => {
 		if (updateDomain?.enabled) {
-			return <div></div>;
+			return (
+				<UpdateDomain
+					domain={updateDomain.domain!}
+					setUpdateDomainState={(state: UpdateDomainState) => {
+						setUpdateDomain({ ...updateDomain, ...state });
+					}}
+					updateOwnedDomains={updateOwnedDomains}
+				></UpdateDomain>
+			);
 		}
 		return (
-			<>
-				{ownedDomains?.map((domain: Domain, index: number) => {
-					return (
-						<div
-							className={styles.galleryItem}
-							key={index}
-							dangerouslySetInnerHTML={{
-								__html: parseImageString(domain.image!)
-									.outerHTML,
-							}}
-							onClick={() => {
-								setUpdateDomain({
-									enabled: !updateDomain?.enabled,
-									domain: domain,
-								});
-							}}
-						></div>
-					);
-				})}
-				<div>Click to modify domain data</div>
-			</>
+			<div className={styles.content}>
+				<div className={styles.gallery}>
+					{ownedDomains?.map((domain: Domain, index: number) => {
+						return (
+							<div
+								className={styles.galleryitem}
+								key={index}
+								dangerouslySetInnerHTML={{
+									__html: parseImageString(domain.image!)
+										.outerHTML,
+								}}
+								onClick={() => {
+									setUpdateDomain({
+										enabled: !updateDomain?.enabled,
+										domain: domain,
+									});
+								}}
+							></div>
+						);
+					})}
+				</div>
+				<div>Click to modify stored domain data</div>
+			</div>
 		);
 	};
 
-	useEffect(() => {
-		async function updateOwnedDomains() {
-			setOwnedDomains(
-				await getOwnedDomains(
-					context?.data.contract!,
-					context?.data.address
-				)
-			);
-		}
-		updateOwnedDomains();
-	}, []);
-
-	return <div className={styles.gallery}>{getContent()}</div>;
+	return getContent();
 };
 
 export default MyDomains;
