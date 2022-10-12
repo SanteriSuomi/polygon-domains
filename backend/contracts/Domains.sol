@@ -69,7 +69,11 @@ contract Domains is ERC721URIStorage, Ownable {
         if (isRegistered(domainName)) revert AlreadyRegistered();
         if (msg.value != getPrice(domainName)) revert NotEnoughEtherPaid();
 
-        Domain memory domain = Domain(msg.sender, data, block.timestamp);
+        Domain memory domain = Domain(
+            msg.sender,
+            data,
+            block.timestamp + maxLeaseTime
+        );
         domainNameToDomainObject[domainName] = domain;
         uint256 tokenId = _tokenIds.current();
         tokenIdToDomain[tokenId] = domainName;
@@ -84,6 +88,7 @@ contract Domains is ERC721URIStorage, Ownable {
     function renewLease(string calldata domainName) external payable {
         if (!checkNameValidity(domainName)) revert NotValidName();
         if (!isRegistered(domainName)) revert NotRegistered();
+        if (!isDomainOwner(domainName)) revert NotOwner();
         if (msg.value != getLeaseRenewCost(domainName))
             revert NotEnoughEtherPaid();
 
