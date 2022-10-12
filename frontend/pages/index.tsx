@@ -12,11 +12,13 @@ import { ethers } from "ethers";
 import { CONTRACT_ADDRESS, CHAIN_ID } from "../utils/constants";
 import contractJson from "../public/abi/Domains.json";
 import { appContext } from "../utils/context";
+import Loading from "../components/loading";
 
 const Home: NextPage = () => {
 	const [data, setData] = useState<Data>({
 		connectButton: { enabled: true, connectText: "No wallet found" },
 	});
+	const [loaded, setLoaded] = useState(false);
 	const [connecting, setConnecting] = useState(false);
 
 	const activatePopup = (text?: string) => {
@@ -102,21 +104,35 @@ const Home: NextPage = () => {
 		}
 	};
 
+	const onNewDomainRegistered = async (
+		registrant: string,
+		domain: string
+	) => {
+		const address = await data.signer?.getAddress();
+		if (registrant !== address) {
+			activatePopup(`New domain ${domain} registered!`);
+		}
+	};
+
 	const onAccountsChanged = (accounts: string[]) => {
 		if (accounts.length === 0) {
 			window.location.reload();
 		}
 	};
 
-	const onNewDomainRegistered = async (
-		registrant: string,
-		domain: string
-	) => {
-		console.log("Data address: ", data.address);
-		const address = await data.signer?.getAddress();
-		if (registrant !== address) {
-			activatePopup(`New domain ${domain} registered!`);
+	const getContent = () => {
+		if (!loaded) {
+			return <Loading></Loading>;
 		}
+		if (data.signer) {
+			return <WalletConnected></WalletConnected>;
+		}
+		return (
+			<WalletNotConnected
+				connectWallet={connectWallet}
+				connecting={connecting}
+			></WalletNotConnected>
+		);
 	};
 
 	useEffect(() => {
@@ -131,7 +147,10 @@ const Home: NextPage = () => {
 		objects.provider.on("network", onChainChanged);
 		objects.contract.on("Registered", onNewDomainRegistered);
 		ethereum.on("accountsChanged", onAccountsChanged);
-		checkWalletConnection(ethereum, objects);
+		(async () => {
+			await checkWalletConnection(ethereum, objects);
+		})();
+		setLoaded(true);
 		return () => {
 			objects.provider.off("network", onChainChanged);
 			objects.contract.off("Registered", onNewDomainRegistered);
@@ -169,15 +188,7 @@ const Home: NextPage = () => {
 			>
 				<div className={styles.container}>
 					<Header></Header>
-					{data.signer ? (
-						<WalletConnected></WalletConnected>
-					) : (
-						<WalletNotConnected
-							connectWallet={connectWallet}
-							connecting={connecting}
-						></WalletNotConnected>
-					)}
-
+					{getContent()}
 					<Popup popupActivateRef={popupActivateRef}></Popup>
 				</div>
 			</appContext.Provider>

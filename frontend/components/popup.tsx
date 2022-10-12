@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import styles from "../styles/popup.module.css";
+import {
+	BASE_POPUP_PERCENTAGE,
+	POPUP_TOTAL_DURATION,
+} from "../utils/constants";
 
 interface PopupProps {
 	popupActivateRef: any;
 }
 
-const BASE_POPUP_PERCENTAGE = 0.975;
-const POPUP_TOTAL_DURATION = 5000;
-
 const Popup: React.FC<PopupProps> = ({ popupActivateRef }) => {
-	const [popupText, setPopupText] = useState("Error: no text");
+	const [popupText, setPopupText] = useState("");
 
 	const popupRef = useRef<HTMLDivElement>(null);
 
@@ -19,10 +20,17 @@ const Popup: React.FC<PopupProps> = ({ popupActivateRef }) => {
 			return;
 		}
 		setPopupText(text);
+	}
+
+	useEffect(() => {
+		popupActivateRef.current = activatePopup;
+	}, []);
+
+	useEffect(() => {
+		if (popupText.length === 0 || !popupRef.current) return;
 		const popupHeight = popupRef.current.clientHeight;
 		const basePopupPos = window.innerHeight * BASE_POPUP_PERCENTAGE;
 		const popupPos = (basePopupPos - popupHeight).toFixed(0);
-		console.log(popupPos);
 		popupRef.current.animate(
 			[
 				{ top: "105%" },
@@ -36,11 +44,7 @@ const Popup: React.FC<PopupProps> = ({ popupActivateRef }) => {
 				iterations: 1,
 			}
 		);
-	}
-
-	useEffect(() => {
-		popupActivateRef.current = activatePopup;
-	}, []);
+	}, [popupText]);
 
 	return (
 		<div ref={popupRef} className={styles.popup}>
