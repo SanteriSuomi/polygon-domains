@@ -36,7 +36,7 @@ describe("Domains contract", () => {
 
     async function testRegisterWithPrice(domainName: string, owner: SignerWithAddress, domainPrice: BigNumber) {
         const connected = contract.connect(owner);
-        await expect(connected.register(domainName, domainName, { value: domainPrice })).to.be.revertedWithCustomError(contract, "NotEnoughEtherPaid")
+        await expect(connected.register(domainName, domainName, { value: domainPrice })).to.be.revertedWithCustomError(contract, "IncorrectEtherPaid")
     }
 
     function getRandomString(length: number) {
@@ -69,7 +69,7 @@ describe("Domains contract", () => {
 
     it("Domain data is correct", async () => {
         const domainData = await contract.getDomainData("test")
-        expect(domainData.data).to.equal("test")
+        expect(domainData).to.equal("test")
     })
 
     it("Can transfer a domain to another address", async () => {
@@ -109,5 +109,39 @@ describe("Domains contract", () => {
         const address = await otherAccounts[1].getAddress()
         const domains = await contract.getOwnedDomains(address);
         expect((() => domains.length === 2 && domains[0].owner === address && domains[1].owner === address)()).to.be.true
+    })
+
+    it("Can register a domain whose lease has expired", async () => {
+        const address = await otherAccounts[1].getAddress()
+        const domains = await contract.getOwnedDomains(address);
+        const domainName = domains[0].name;
+        let leaseTimeRemaining = await contract.getLeaseTimeRemaining(domainName);
+        await ethers.provider.send("evm_increaseTime", [leaseTimeRemaining.toNumber() + 1])
+        await ethers.provider.send("evm_mine", []);
+
+        const domainPrice = await contract.getPrice(domainName)
+        await contract.register(domains[0].name, "", { value: domainPrice })
+
+        expect((await contract.balanceOf(await owner.getAddress())).toNumber()).to.be.equal(1)
+    })
+
+    it("Can renew lease on a domain", async () => {
+        const address = await owner.getAddress()
+        const domains = await contract.getOwnedDomains(address);
+        const domainName = domains[0].name;
+        let leaseTimeRemaining = await contract.getLeaseTimeRemaining(domainName);
+        await ethers.provider.send("evm_increaseTime", [leaseTimeRemaining.toNumber() / 2])
+        await ethers.provider.send("evm_mine", []);
+
+        const renewCost = await contract.getLeaseRenewCost(domainName)
+        await contract.renewLease(domains[0].name, { value: renewCost })
+
+        leaseTimeRemaining = await contract.getLeaseTimeRemaining(domainName);
+        const maxLeaseTime = await contract.maxLeaseTime();
+        expect(leaseTimeRemaining).to.be.equal(maxLeaseTime)
+    })
+
+    it("Can't get data for a domain that does not exist", async () => {
+        expect(contract.getDomainData("testttt")).to.be.revertedWithCustomError(contract, "LeaseExpired")
     })
 })
