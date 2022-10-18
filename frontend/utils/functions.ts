@@ -1,5 +1,5 @@
 import { BigNumber, Contract, ContractTransaction } from "ethers";
-import { Domain } from "../types/types";
+import { Domain, DomainRaw } from "../types/types";
 
 const mintDomain = async (contract: Contract, domainName: string, domainData: string, domainPrice: string, activatePopup?: (text: string) => void) => {
     if (!domainName || domainName.length < 1) {
@@ -34,9 +34,9 @@ const getOwnedDomains = async (contract: Contract, address?: string): Promise<Do
         return [];
     }
 
-    function decodeUris(domains: Domain[]) {
+    function decodeUris(domains: DomainRaw[]) {
         const decodedDomains: Domain[] = [];
-        domains.forEach((domain: Domain) => {
+        domains.forEach((domain: DomainRaw) => {
             const base64 = domain.uri?.split(",")[1];
             if (!base64) {
                 console.warn(
@@ -49,10 +49,12 @@ const getOwnedDomains = async (contract: Contract, address?: string): Promise<Do
             const imageBase64 = uriObject.image.split(",")[1];
             const image = Buffer.from(imageBase64, "base64").toString();
             decodedDomains.push({
-                data: domain.data,
                 name: domain.name,
                 owner: domain.owner,
+                data: domain.data,
                 uri: domain.uri,
+                tokenId: domain.tokenId.toNumber(),
+                leaseEndTime: new Date(domain.leaseEndTime.toNumber() * 1000),
                 image: image,
             });
         });
@@ -62,11 +64,12 @@ const getOwnedDomains = async (contract: Contract, address?: string): Promise<Do
     return decodeUris(await contract.getOwnedDomains(address));
 };
 
-const updateDomainData = async (contract: Contract, domainName: string, data: string, activatePopup?: (text: string) => void) => {
+const updateDomainData = async (contract: Contract, domainName: string, data: string, activatePopup?: (text: string) => void): Promise<boolean> => {
+    let receipt;
     try {
         const txn: ContractTransaction =
             await contract.modifyData(domainName, data);
-        const receipt = await txn.wait();
+        receipt = await txn.wait();
         if (receipt.status === 1) {
             activatePopup?.("Domain data updated!");
         } else {
@@ -75,6 +78,33 @@ const updateDomainData = async (contract: Contract, domainName: string, data: st
     } catch (error: any) {
         activatePopup?.(error.message)
     }
+    return receipt?.status === 1;
 }
 
-export { mintDomain, getDomainPrice, getOwnedDomains, updateDomainData }
+const getDomainLeaseRenewCost = async (contract: Contract, domainName: string): Promise<BigNumber> => {
+    return contract.getLeaseRenewCost(domainName);
+}
+
+const renewDomainLease = async (contract: Contract, domainName: string, activatePopup?: (text: string) => void): Promise<boolean> => {
+    let receipt;
+    try {
+        const cost = await getDomainLeaseRenewCost(contract, domainName)
+        const txn: ContractTransaction =
+            await contract.renewLease(domainName, { value: cost });
+        receipt = await txn.wait();
+        if (receipt.status === 1) {
+            activatePopup?.("Lease renewed!");
+        } else {
+            activatePopup?.("Something went wrong with the transaction")
+        }
+    } catch (error: any) {
+        activatePopup?.(error.message)
+    }
+    return receipt?.status === 1;
+}
+
+const dateHasPassed = (date: Date) => {
+    return date.getTime() < Date.now();
+}
+
+export { mintDomain, getDomainPrice, getOwnedDomains, updateDomainData, getDomainLeaseRenewCost, renewDomainLease, dateHasPassed }

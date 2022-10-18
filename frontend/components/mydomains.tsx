@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { Domain, UpdateDomainState } from "../types/types";
 import { appContext } from "../utils/context";
-import { getOwnedDomains } from "../utils/functions";
+import { dateHasPassed, getOwnedDomains } from "../utils/functions";
 import styles from "../styles/mydomains.module.css";
 import UpdateDomain from "./updatedomain";
 
@@ -52,26 +52,34 @@ const MyDomains: React.FC<MyDomainsProps> = () => {
 		return (
 			<div className={styles.content}>
 				<div className={styles.gallery}>
-					{ownedDomains?.map((domain: Domain, index: number) => {
-						return (
-							<div
-								className={styles.galleryitem}
-								key={index}
-								dangerouslySetInnerHTML={{
-									__html: parseImageString(domain.image!)
-										.outerHTML,
-								}}
-								onClick={() => {
-									setUpdateDomain({
-										enabled: !updateDomain?.enabled,
-										domain: domain,
-									});
-								}}
-							></div>
-						);
-					})}
+					{ownedDomains?.length === 0
+						? "No domains owned"
+						: ownedDomains?.map((domain: Domain, index: number) => {
+								if (dateHasPassed(domain.leaseEndTime)) {
+									return <div key={index}></div>;
+								}
+								return (
+									<div
+										className={styles.galleryitem}
+										key={index}
+										dangerouslySetInnerHTML={{
+											__html: parseImageString(
+												domain.image!
+											).outerHTML,
+										}}
+										onClick={() => {
+											setUpdateDomain({
+												enabled: !updateDomain?.enabled,
+												domain: domain,
+											});
+										}}
+									></div>
+								);
+						  })}
 				</div>
-				<div>Click to modify stored domain data</div>
+				<div>
+					Click a domain to modify stored data and see other details
+				</div>
 			</div>
 		);
 	};

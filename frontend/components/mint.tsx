@@ -1,5 +1,5 @@
-import { ethers } from "ethers";
-import React, { Fragment, useContext, useState } from "react";
+import { BigNumber, ethers } from "ethers";
+import React, { useContext, useEffect, useState } from "react";
 
 import styles from "../styles/mint.module.css";
 import { getDomainPrice, mintDomain } from "../utils/functions";
@@ -11,6 +11,7 @@ const Mint: React.FC<MintProps> = () => {
 	const [domainPrice, setDomainPrice] = useState("");
 	const [domainData, setDomainData] = useState("");
 	const [domainName, setDomainName] = useState("");
+	const [maxDomainLength, setMaxDomainLength] = useState(0);
 
 	const context = useContext(appContext);
 
@@ -18,6 +19,11 @@ const Mint: React.FC<MintProps> = () => {
 		event: React.ChangeEvent<HTMLInputElement>
 	) => {
 		const value = event.currentTarget.value;
+		if (value.length > maxDomainLength) {
+			return context?.activatePopup(
+				"Max domain length is " + maxDomainLength
+			);
+		}
 		if (!value) {
 			setDomainPrice("");
 			return;
@@ -27,6 +33,17 @@ const Mint: React.FC<MintProps> = () => {
 		);
 		setDomainName(value);
 	};
+
+	useEffect(() => {
+		const updateMaxDomainLength = async () => {
+			const maxLength: BigNumber =
+				await context?.data.contract?.maxDomainLength();
+			if (maxLength) {
+				setMaxDomainLength(maxLength.toNumber());
+			}
+		};
+		updateMaxDomainLength();
+	}, []);
 
 	return (
 		<div className={styles.mintform}>
@@ -41,7 +58,7 @@ const Mint: React.FC<MintProps> = () => {
 					{domainPrice.length > 0 ? (
 						`${ethers.utils.formatEther(domainPrice)} matic`
 					) : (
-						<Fragment></Fragment>
+						<></>
 					)}
 				</div>
 			</div>

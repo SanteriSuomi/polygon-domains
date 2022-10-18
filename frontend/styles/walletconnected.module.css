@@ -6,6 +6,10 @@
     color: white;
 }
 
+.walletconnectedcontent {
+    min-width: 400px;
+}
+
 .statebuttonswrapper {
     top: 40vh;
 }

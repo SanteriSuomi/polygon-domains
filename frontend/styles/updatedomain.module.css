@@ -23,7 +23,9 @@
     font-size: 21px;
 }
 
-.modifydomainname {
+.modifydomainname,
+.leaseendtime,
+.leaserenewcost {
     color: #9966cc;
     font-size: 23px;
 }
@@ -34,9 +36,12 @@
     font-size: 25px;
     border-radius: 10px;
     cursor: pointer;
+    margin-left: 140px;
 }
 
-.domaindatatext {
+.domaindatatext,
+.domainleasetext,
+.domainleaseremaintext {
     align-self: flex-start;
 }
 
@@ -49,10 +54,19 @@
     width: 210px;
 }
 
-.submitdata {
+.submitdata,
+.renewleasebutton {
     font-size: 17px;
     background-color: #8247e5;
     color: white;
     padding: 6px 12px 6px 12px;
     border-radius: 10px;
+}
+
+.separator {
+    margin-bottom: 15px;
+}
+
+.submitdata {
+    margin-bottom: 15px;
 }

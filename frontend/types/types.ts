@@ -1,4 +1,4 @@
-import { Contract, ethers } from "ethers";
+import { Contract, ethers, BigNumber } from "ethers";
 
 interface Data {
     connectButton?: { enabled: boolean; connectText: string };
@@ -12,7 +12,14 @@ interface Domain {
     owner: string;
     data: string;
     uri?: string;
+    tokenId: number;
+    leaseEndTime: Date;
     image?: string;
+}
+
+interface DomainRaw extends Omit<Domain, "leaseEndTime" | "tokenId"> {
+    leaseEndTime: BigNumber;
+    tokenId: BigNumber;
 }
 
 interface Objects {
@@ -30,4 +37,4 @@ type Context = { activatePopup: ActivatePopupFunc, data: Data } | undefined
 
 type ActivatePopupFunc = (text?: string) => void;
 
-export type { Data, Domain, Objects, UpdateDomainState, Context, ActivatePopupFunc };
+export type { Data, Domain, DomainRaw, Objects, UpdateDomainState, Context, ActivatePopupFunc };
