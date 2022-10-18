@@ -1,5 +1,6 @@
 # Polygon Domain Service
 
-Simple domain name service on the Polygon blockchain network.
+Domain name service on the Polygon blockchain
 
-Deployed to https://polygon-domains-tau.vercel.app/
+Frontend deployed to https://polygon-domains-tau.vercel.app/
+Contract deployed to https://mumbai.polygonscan.com/address/0xFC80Bdd0873162A91b200C42cFF62638ba705098
